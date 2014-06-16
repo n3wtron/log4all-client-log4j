@@ -9,8 +9,9 @@
     </appender>
 
     <appender name="log4allAppender" class="net.log4all.log4j.Log4AllAppender">
-        <param name="log4allUrl" value="http://localhost:6543"/>
+        <param name="log4allUrl" value="http://localhost:6544"/>
         <param name="cacheFile" value="/tmp/log4all_cache.log"/>
+        <param name="hashtagLevel" value="level"/>
         <layout class="org.apache.log4j.PatternLayout">
             <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%c{1}] %m%n"/>
         </layout>
@@ -18,7 +19,6 @@
 
     <root>
         <level value="INFO"/>
-        <appender-ref ref="consoleAppender"/>
         <appender-ref ref="log4allAppender"/>
     </root>
 

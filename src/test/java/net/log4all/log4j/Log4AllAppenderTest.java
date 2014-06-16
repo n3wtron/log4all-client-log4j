@@ -5,6 +5,9 @@ import org.apache.log4j.xml.DOMConfigurator;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import java.io.FileNotFoundException;
+import java.util.Date;
+
 /**
  * Created by igor on 05/06/14.
  */
@@ -17,9 +20,25 @@ public class Log4AllAppenderTest {
         logger=Logger.getLogger(getClass());
     }
 
+    @Test(threadPoolSize = 10, invocationCount = 100)
+    public void longTest(){
+        try{
+            throw new Exception("test exception",new FileNotFoundException("test filenotfoundException"));
+        }catch(Exception e) {
+            logger.info("test message very long very long  very long  very long  very long  very long  very long " +
+                    " very long  very long  very long  very long  very long  very long  very long " +
+                    " very long  very long  very long  very long  very long  very long  very long  very long " +
+                    " very long  very long  very long  very long  very long  very long  very long  very long " +
+                    "#application:log4j-test #rand:"+new Date().getSeconds(),e);
+        }
+    }
     @Test
-    public void basicTest(){
-        logger.info("test messaggio");
-
+    public void basicTest() throws InterruptedException {
+        try{
+            throw new Exception("test exception",new FileNotFoundException("test filenotfoundException"));
+        }catch(Exception e) {
+            logger.info("test message #application:log4j-test2",e);
+        }
+        Thread.sleep(10000);
     }
 }
