@@ -13,7 +13,7 @@ import java.util.Date;
  */
 public class Log4AllAppenderTest {
     private Logger logger;
-
+    private int seq=0;
     @BeforeTest
     public void initLog4j(){
         DOMConfigurator.configure(getClass().getClassLoader().getResource("log4j.xml"));
@@ -25,13 +25,20 @@ public class Log4AllAppenderTest {
         try{
             throw new Exception("test exception",new FileNotFoundException("test filenotfoundException"));
         }catch(Exception e) {
-            logger.info("test message very long very long  very long  very long  very long  very long  very long " +
+            logger.warn("test message very long very long  very long  very long  very long  very long  very long " +
                     " very long  very long  very long  very long  very long  very long  very long " +
                     " very long  very long  very long  very long  very long  very long  very long  very long " +
                     " very long  very long  very long  very long  very long  very long  very long  very long " +
                     "#application:log4j-test #rand:"+new Date().getSeconds(),e);
         }
     }
+
+    @Test(invocationCount = 100)
+    public void sequenceTest() throws InterruptedException {
+       logger.info("Sequence test #test:sequenceTest #+seq:"+seq);
+       seq++;
+    }
+
     @Test
     public void basicTest() throws InterruptedException {
         try{
