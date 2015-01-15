@@ -48,19 +48,15 @@ public class CacheFlusher implements  Runnable{
         Log4AllClient log4allClient = new Log4AllClient(log4allUrl,this.application);
         try {
             for (File cacheFile:cacheFilesToFlush) {
-                System.out.println("Start flushing file " + cacheFile.getAbsolutePath());
                 List<String> lines = FileUtils.readLines(cacheFile);
                 JSONArray logs=new JSONArray();
                 for (String line:lines) {
                     logs.put(new JSONObject(line));
                 }
                 if (logs != null) {
-                    System.out.println("array size:"+logs.length());
                     if(log4allClient.log(logs)) {
                         cacheFile.delete();
                     }
-                } else {
-                    System.out.println("log null");
                 }
             }
         } catch (IOException e) {

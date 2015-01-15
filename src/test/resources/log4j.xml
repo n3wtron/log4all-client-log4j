@@ -10,7 +10,7 @@
 
     <appender name="log4allAppender" class="net.log4all.log4j.Log4AllAppender">
         <param name="log4allUrl" value="http://localhost:6543"/>
-        <param name="application" value="log4all-test-app"/>
+        <param name="application" value="testLog4j"/>
         <param name="cacheFile" value="/tmp/log4all_cache.log"/>
         <param name="maxSize" value="50480"/>
         <param name="maxOldSec" value="10"/>
