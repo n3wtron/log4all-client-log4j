@@ -24,6 +24,7 @@ public class Log4AllAppender extends AppenderSkeleton {
 	private String cacheFile;
 	private String log4allUrl;
 	private String application;
+	private String token;
 	private long maxSize = 5242880;
 	private int maxOldSec = 60;
 	private static Date lastFlusherStarted = null;
@@ -32,9 +33,7 @@ public class Log4AllAppender extends AppenderSkeleton {
 	protected void append(LoggingEvent event) {
 		Map<String, String> additionalTags = new HashMap<String, String>();
 		sendLog(event, additionalTags);
-		if (lastFlusherStarted == null
-				|| lastFlusherStarted.before(new Date(new Date().getTime()
-						- maxOldSec * 1000))) {
+		if (lastFlusherStarted == null || lastFlusherStarted.before(new Date(new Date().getTime() - maxOldSec * 1000))) {
 			startFlusher();
 		}
 	}
@@ -49,8 +48,7 @@ public class Log4AllAppender extends AppenderSkeleton {
 			File cacheFl = new File(getCacheFile());
 			if (cacheFl.exists()) {
 				// rename cacheFile for the thread to prevent multi flush
-				nwCacheFile = getCacheFile() + "-"
-						+ UUID.randomUUID().toString() + ".toFlush";
+				nwCacheFile = getCacheFile() + "-" + UUID.randomUUID().toString() + ".toFlush";
 				try {
 					FileUtils.moveFile(cacheFl, new File(nwCacheFile));
 				} catch (IOException e) {
@@ -64,54 +62,53 @@ public class Log4AllAppender extends AppenderSkeleton {
 	private void startFlusher() {
 		lastFlusherStarted = new Date();
 		System.out.println("Starting flusher");
-		CacheFlusher flusher = new CacheFlusher(getLog4allUrl(),
-				getApplication(), getCacheFile());
+		CacheFlusher flusher = new CacheFlusher(getLog4allUrl(), getApplication(), getToken(),getCacheFile());
 		Thread flusherTh = new Thread(flusher);
 		flusherTh.start();
 	}
 
 	private void cacheLog(LoggingEvent event, Map<String, String> additionalTags) {
-        if (getCacheFile() != null && !getCacheFile().isEmpty()) {
-            File outFile = new File(getCacheFile());
-            if (outFile.length() > maxSize || outFile.lastModified() < (new Date().getTime() - (maxOldSec * 1000))) {
-                flushCache();
-            }
-            synchronized (cacheLock) {
-                FileWriter fwriter = null;
-                try {
-                    String message = event.getMessage().toString();
-                    for (Map.Entry<String, String> hashEntry : additionalTags.entrySet()) {
-                        message += " #" + hashEntry.getKey() + ":" + hashEntry.getValue();
-                    }
-                    JSONObject jsonLog;
-                    if (event.getThrowableInformation()!=null) {
-                    	StringBuffer stackBuff = new StringBuffer();
-                    	for (String snglStack : event.getThrowableInformation().getThrowableStrRep()){
-                    		stackBuff.append(snglStack+"\n");
-                    	}
-                         jsonLog = Log4AllClient.toJSON(message,event.getLevel().toString().replace('\n', ' '),stackBuff.toString() , new Date());
-                    }else{
-                        jsonLog = Log4AllClient.toJSON(message, event.getLevel().toString().replace('\n', ' '),new Date());
-                    }
-                    fwriter = new FileWriter(outFile, true);
-                    jsonLog.write(fwriter);
-                    fwriter.write('\n');
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    if (fwriter != null) {
-                        try {
-                            fwriter.flush();
-                            fwriter.close();
-                        } catch (IOException e) {
-                        }
-                    }
-                }
-            }
-        }
-    }
+		if (getCacheFile() != null && !getCacheFile().isEmpty()) {
+			File outFile = new File(getCacheFile());
+			if (outFile.length() > maxSize || outFile.lastModified() < (new Date().getTime() - (maxOldSec * 1000))) {
+				flushCache();
+			}
+			synchronized (cacheLock) {
+				FileWriter fwriter = null;
+				try {
+					String message = event.getMessage().toString();
+					for (Map.Entry<String, String> hashEntry : additionalTags.entrySet()) {
+						message += " #" + hashEntry.getKey() + ":" + hashEntry.getValue();
+					}
+					JSONObject jsonLog;
+					if (event.getThrowableInformation() != null) {
+						StringBuffer stackBuff = new StringBuffer();
+						for (String snglStack : event.getThrowableInformation().getThrowableStrRep()) {
+							stackBuff.append(snglStack + "\n");
+						}
+						jsonLog = Log4AllClient.toJSON(message, event.getLevel().toString().replace('\n', ' '), stackBuff.toString(), new Date());
+					} else {
+						jsonLog = Log4AllClient.toJSON(message, event.getLevel().toString().replace('\n', ' '), new Date());
+					}
+					fwriter = new FileWriter(outFile, true);
+					jsonLog.write(fwriter);
+					fwriter.write('\n');
+				} catch (JSONException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				} finally {
+					if (fwriter != null) {
+						try {
+							fwriter.flush();
+							fwriter.close();
+						} catch (IOException e) {
+						}
+					}
+				}
+			}
+		}
+	}
 
 	public String getCacheFile() {
 		return cacheFile;
@@ -157,5 +154,13 @@ public class Log4AllAppender extends AppenderSkeleton {
 
 	public void setApplication(String application) {
 		this.application = application;
+	}
+
+	public String getToken() {
+		return token;
+	}
+
+	public void setToken(String token) {
+		this.token = token;
 	}
 }
