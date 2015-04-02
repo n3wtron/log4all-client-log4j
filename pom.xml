@@ -6,7 +6,7 @@
 
     <groupId>net.log4all</groupId>
     <artifactId>log4all-client-log4j</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <build>
     	<plugins>
     	<plugin>
@@ -30,8 +30,8 @@
         </dependency>
         <dependency>
             <groupId>net.log4all</groupId>
-            <artifactId>log4all-client-java</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <artifactId>log4all-client</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.testng</groupId>
@@ -41,4 +41,9 @@
         </dependency>
 
     </dependencies>
+    <scm>
+    	<connection>scm:git:https://github.com/n3wtron/log4all-client-log4j.git</connection>
+    	<url>https://github.com/n3wtron/log4all-client-log4j</url>
+    	<developerConnection>Igor Maculan &lt;n3wtron@gmail.com&gt;</developerConnection>
+    </scm>
 </project>

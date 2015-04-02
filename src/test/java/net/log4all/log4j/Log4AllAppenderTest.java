@@ -27,7 +27,7 @@ public class Log4AllAppenderTest {
         try{
             throw new Exception("test exception",new FileNotFoundException("test filenotfoundException"));
         }catch(Exception e) {
-            logger.error("#type:long  test message very long very long  very long  very long  very long  very long  very long " +
+            logger.error("#type:longErrorTest  test message very long very long  very long  very long  very long  very long  very long " +
                     " very long  very long  very long  very long  very long  very long  very long " +
                     " very long  very long  very long  very long  very long  very long  very long  very long " +
                     " very long  very long  very long  very long  very long  very long  very long  very long " +
@@ -38,7 +38,7 @@ public class Log4AllAppenderTest {
     @Test(threadPoolSize = 10, invocationCount = 100)
     public void longWarnTest(){
         try{
-            throw new Exception(" test exception",new FileNotFoundException("test filenotfoundException"));
+            throw new Exception("#test:longWarnTest test exception",new FileNotFoundException("test filenotfoundException"));
         }catch(Exception e) {
             logger.warn("#type:long  test message very long very long  very long  very long  very long  very long  very long " +
                     " very long  very long  very long  very long  very long  very long  very long " +
@@ -48,9 +48,9 @@ public class Log4AllAppenderTest {
         }
     }
 
-    @Test(invocationCount = 100)
+    @Test(invocationCount = 1000)
     public void sequenceTest() throws InterruptedException {
-       logger.info("Sequence test #test:sequenceTest #+seq:"+seq);
+       logger.info("Sequence test #test:sequenceTest ##seq:"+seq);
        seq++;
     }
 

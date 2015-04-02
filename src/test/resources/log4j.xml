@@ -9,7 +9,7 @@
     </appender>
 
     <appender name="log4allAppender" class="net.log4all.log4j.Log4AllAppender">
-        <param name="log4allUrl" value="http://localhost:6543"/>
+        <param name="log4allUrl" value="http://localhost:9000"/>
         <param name="application" value="testLog4j"/>
         <param name="token" value="MIO_TOKEN"/>
         <param name="cacheFile" value="/tmp/log4all_cache.log"/>

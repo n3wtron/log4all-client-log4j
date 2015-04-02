@@ -12,6 +12,7 @@ import net.log4all.client.Log4AllClient;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.AppenderSkeleton;
+import org.apache.log4j.spi.LocationInfo;
 import org.apache.log4j.spi.LoggingEvent;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -80,6 +81,8 @@ public class Log4AllAppender extends AppenderSkeleton {
 					for (Map.Entry<String, String> hashEntry : additionalTags.entrySet()) {
 						message += " #" + hashEntry.getKey() + ":" + hashEntry.getValue();
 					}
+					LocationInfo locInfo = event.getLocationInformation();
+					message +=" #class:\""+locInfo.getClassName()+"."+locInfo.getMethodName()+"():"+locInfo.getLineNumber()+"\"";
 					JSONObject jsonLog;
 					if (event.getThrowableInformation() != null) {
 						StringBuffer stackBuff = new StringBuffer();
