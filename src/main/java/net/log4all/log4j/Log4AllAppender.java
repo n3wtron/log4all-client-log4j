@@ -77,7 +77,7 @@ public class Log4AllAppender extends AppenderSkeleton {
             synchronized (cacheLock) {
                 FileWriter fwriter = null;
                 try {
-                    //TODO decidere cosa restituire in caso di messaggio nullo
+                    //TODO what write in null message body case?
                     String message = event!=null && event.getMessage()!=null?event.getMessage().toString():"NULL MESSAGE";
                     for (Map.Entry<String, String> hashEntry : additionalTags.entrySet()) {
                         message += " #" + hashEntry.getKey() + ":" + hashEntry.getValue();
@@ -105,7 +105,7 @@ public class Log4AllAppender extends AppenderSkeleton {
                     e.printStackTrace();
                 }
 
-                //elimina ogni possibile eccezione
+                //removed all Exception
 
                 catch (Exception e) {
                     e.printStackTrace();
