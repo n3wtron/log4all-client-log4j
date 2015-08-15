@@ -102,6 +102,9 @@ public class Log4AllAppender extends AppenderSkeleton {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
+				catch (RuntimeException e) {
+					e.printStackTrace();
+				}
                 catch (Exception e){
                     e.printStackTrace();
                 }
