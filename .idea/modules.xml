@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/../log4all-client-java/log4all-client.iml" filepath="$PROJECT_DIR$/../log4all-client-java/log4all-client.iml" />
+      <module fileurl="file://$PROJECT_DIR$/log4all-client-log4j.iml" filepath="$PROJECT_DIR$/log4all-client-log4j.iml" />
+    </modules>
+  </component>
+</project>
