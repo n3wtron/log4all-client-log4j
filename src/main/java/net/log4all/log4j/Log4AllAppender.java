@@ -21,158 +21,154 @@ import org.codehaus.jettison.json.JSONObject;
  * Created by igor on 05/06/14.
  */
 public class Log4AllAppender extends AppenderSkeleton {
-    private final Object cacheLock = new Object();
-    private String cacheFile;
-    private String log4allUrl;
-    private String application;
-    private String token;
-    private long maxSize = 5242880;
-    private int maxOldSec = 60;
-    private static Date lastFlusherStarted = null;
+	private final Object cacheLock = new Object();
+	private String cacheFile;
+	private String log4allUrl;
+	private String application;
+	private String token;
+	private long maxSize = 5242880;
+	private int maxOldSec = 60;
+	private static Date lastFlusherStarted = null;
 
-    @Override
-    protected void append(LoggingEvent event) {
-        Map<String, String> additionalTags = new HashMap<String, String>();
-        sendLog(event, additionalTags);
-        if (lastFlusherStarted == null || lastFlusherStarted.before(new Date(new Date().getTime() - maxOldSec * 1000))) {
-            startFlusher();
-        }
-    }
+	@Override
+	protected void append(LoggingEvent event) {
+		Map<String, String> additionalTags = new HashMap<String, String>();
+		sendLog(event, additionalTags);
+		if (lastFlusherStarted == null || lastFlusherStarted.before(new Date(new Date().getTime() - maxOldSec * 1000))) {
+			startFlusher();
+		}
+	}
 
-    private void sendLog(LoggingEvent event, Map<String, String> additionalTags) {
-        cacheLog(event, additionalTags);
-    }
+	private void sendLog(LoggingEvent event, Map<String, String> additionalTags) {
+		cacheLog(event, additionalTags);
+	}
 
-    private void flushCache() {
-        String nwCacheFile = null;
-        synchronized (cacheLock) {
-            File cacheFl = new File(getCacheFile());
-            if (cacheFl.exists()) {
-                // rename cacheFile for the thread to prevent multi flush
-                nwCacheFile = getCacheFile() + "-" + UUID.randomUUID().toString() + ".toFlush";
-                try {
-                    FileUtils.moveFile(cacheFl, new File(nwCacheFile));
-                } catch (IOException e) {
+	private void flushCache() {
+		String nwCacheFile = null;
+		synchronized (cacheLock) {
+			File cacheFl = new File(getCacheFile());
+			if (cacheFl.exists()) {
+				// rename cacheFile for the thread to prevent multi flush
+				nwCacheFile = getCacheFile() + "-" + UUID.randomUUID().toString() + ".toFlush";
+				try {
+					FileUtils.moveFile(cacheFl, new File(nwCacheFile));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		startFlusher();
+	}
+
+	private void startFlusher() {
+		lastFlusherStarted = new Date();
+		System.out.println("Starting flusher");
+		CacheFlusher flusher = new CacheFlusher(getLog4allUrl(), getApplication(), getToken(),getCacheFile());
+		Thread flusherTh = new Thread(flusher);
+		flusherTh.start();
+	}
+
+	private void cacheLog(LoggingEvent event, Map<String, String> additionalTags) {
+		if (getCacheFile() != null && !getCacheFile().isEmpty()) {
+			File outFile = new File(getCacheFile());
+			if (outFile.length() > maxSize || outFile.lastModified() < (new Date().getTime() - (maxOldSec * 1000))) {
+				flushCache();
+			}
+			synchronized (cacheLock) {
+				FileWriter fwriter = null;
+				try {
+                    //TODO What write in null message body case?
+					String message = event!=null && event.getMessage()!=null?event.getMessage().toString():"NULL MESSAGE";
+					for (Map.Entry<String, String> hashEntry : additionalTags.entrySet()) {
+						message += " #" + hashEntry.getKey() + ":" + hashEntry.getValue();
+					}
+					LocationInfo locInfo = event.getLocationInformation();
+					message +=" #class:\""+locInfo.getClassName()+"."+locInfo.getMethodName()+"():"+locInfo.getLineNumber()+"\"";
+					JSONObject jsonLog;
+					if (event.getThrowableInformation() != null) {
+						StringBuffer stackBuff = new StringBuffer();
+						for (String snglStack : event.getThrowableInformation().getThrowableStrRep()) {
+							stackBuff.append(snglStack + "\n");
+						}
+						jsonLog = Log4AllClient.toJSON(message, event.getLevel().toString().replace('\n', ' '), stackBuff.toString(), new Date());
+					} else {
+						jsonLog = Log4AllClient.toJSON(message, event.getLevel().toString().replace('\n', ' '), new Date());
+					}
+					fwriter = new FileWriter(outFile, true);
+					jsonLog.write(fwriter);
+					fwriter.write('\n');
+				} catch (JSONException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+                catch (Exception e){
                     e.printStackTrace();
                 }
-            }
-        }
-        startFlusher();
-    }
+                finally {
+					if (fwriter != null) {
+						try {
+							fwriter.flush();
+							fwriter.close();
+						} catch (IOException e) {
+						}
+					}
+				}
+			}
+		}
+	}
 
-    private void startFlusher() {
-        lastFlusherStarted = new Date();
-        System.out.println("Starting flusher");
-        CacheFlusher flusher = new CacheFlusher(getLog4allUrl(), getApplication(), getToken(), getCacheFile());
-        Thread flusherTh = new Thread(flusher);
-        flusherTh.start();
-    }
+	public String getCacheFile() {
+		return cacheFile;
+	}
 
-    private void cacheLog(LoggingEvent event, Map<String, String> additionalTags) {
-        if (getCacheFile() != null && !getCacheFile().isEmpty()) {
-            File outFile = new File(getCacheFile());
-            if (outFile.length() > maxSize || outFile.lastModified() < (new Date().getTime() - (maxOldSec * 1000))) {
-                flushCache();
-            }
-            synchronized (cacheLock) {
-                FileWriter fwriter = null;
-                try {
-                    //TODO what write in null message body case?
-                    String message = event!=null && event.getMessage()!=null?event.getMessage().toString():"NULL MESSAGE";
-                    for (Map.Entry<String, String> hashEntry : additionalTags.entrySet()) {
-                        message += " #" + hashEntry.getKey() + ":" + hashEntry.getValue();
-                    }
-                    LocationInfo locInfo = event.getLocationInformation();
-                    message += " #class:\"" + locInfo.getClassName() + "." + locInfo.getMethodName() + "():" + locInfo.getLineNumber() + "\"";
-                    JSONObject jsonLog;
-                    if (event.getThrowableInformation() != null) {
-                        StringBuffer stackBuff = new StringBuffer();
-                        for (String snglStack : event.getThrowableInformation().getThrowableStrRep()) {
-                            stackBuff.append(snglStack + "\n");
-                        }
-                        jsonLog = Log4AllClient.toJSON(message, event.getLevel().toString().replace('\n', ' '), stackBuff.toString(), new Date());
-                    } else {
-                        jsonLog = Log4AllClient.toJSON(message, event.getLevel().toString().replace('\n', ' '), new Date());
-                    }
-                    fwriter = new FileWriter(outFile, true);
-                    jsonLog.write(fwriter);
-                    fwriter.write('\n');
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (RuntimeException e) {
-                    e.printStackTrace();
-                }
+	public void setCacheFile(String cacheFile) {
+		this.cacheFile = cacheFile;
+	}
 
-                //removed all Exception
+	public String getLog4allUrl() {
+		return log4allUrl;
+	}
 
-                catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    if (fwriter != null) {
-                        try {
-                            fwriter.flush();
-                            fwriter.close();
-                        } catch (IOException e) {
-                        }
-                    }
-                }
-            }
-        }
-    }
+	public void setLog4allUrl(String log4allUrl) {
+		this.log4allUrl = log4allUrl;
+	}
 
-    public String getCacheFile() {
-        return cacheFile;
-    }
+	@Override
+	public void close() {
 
-    public void setCacheFile(String cacheFile) {
-        this.cacheFile = cacheFile;
-    }
+	}
 
-    public String getLog4allUrl() {
-        return log4allUrl;
-    }
+	@Override
+	public boolean requiresLayout() {
+		return false;
+	}
 
-    public void setLog4allUrl(String log4allUrl) {
-        this.log4allUrl = log4allUrl;
-    }
+	public long getMaxSize() {
+		return maxSize;
+	}
 
-    @Override
-    public void close() {
+	public void setMaxSize(long maxSize) {
+		this.maxSize = maxSize;
+	}
 
-    }
+	public void setMaxOldSec(int maxOldSec) {
+		this.maxOldSec = maxOldSec;
+	}
 
-    @Override
-    public boolean requiresLayout() {
-        return false;
-    }
+	public String getApplication() {
+		return application;
+	}
 
-    public long getMaxSize() {
-        return maxSize;
-    }
+	public void setApplication(String application) {
+		this.application = application;
+	}
 
-    public void setMaxSize(long maxSize) {
-        this.maxSize = maxSize;
-    }
+	public String getToken() {
+		return token;
+	}
 
-    public void setMaxOldSec(int maxOldSec) {
-        this.maxOldSec = maxOldSec;
-    }
-
-    public String getApplication() {
-        return application;
-    }
-
-    public void setApplication(String application) {
-        this.application = application;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
+	public void setToken(String token) {
+		this.token = token;
+	}
 }
