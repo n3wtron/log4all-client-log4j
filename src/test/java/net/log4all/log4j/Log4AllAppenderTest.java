@@ -62,6 +62,15 @@ public class Log4AllAppenderTest {
             logger.info("#type:basic  test message #application:log4j-test2",e);
         }
     }
+
+    @Test
+    public void nullMessageTest() throws InterruptedException {
+        try{
+            throw new Exception("test exception",new FileNotFoundException("test filenotfoundException"));
+        }catch(Exception e) {
+            logger.info(null,e);
+        }
+    }
     
     @AfterClass
     public void waitThreads(){

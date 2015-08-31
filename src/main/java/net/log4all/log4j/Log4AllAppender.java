@@ -77,7 +77,8 @@ public class Log4AllAppender extends AppenderSkeleton {
 			synchronized (cacheLock) {
 				FileWriter fwriter = null;
 				try {
-					String message = event.getMessage().toString();
+                    //TODO What write in null message body case?
+					String message = event!=null && event.getMessage()!=null?event.getMessage().toString():"NULL MESSAGE";
 					for (Map.Entry<String, String> hashEntry : additionalTags.entrySet()) {
 						message += " #" + hashEntry.getKey() + ":" + hashEntry.getValue();
 					}
@@ -100,7 +101,14 @@ public class Log4AllAppender extends AppenderSkeleton {
 					e.printStackTrace();
 				} catch (IOException e) {
 					e.printStackTrace();
-				} finally {
+				}
+				catch (RuntimeException e) {
+					e.printStackTrace();
+				}
+                catch (Exception e){
+                    e.printStackTrace();
+                }
+                finally {
 					if (fwriter != null) {
 						try {
 							fwriter.flush();
