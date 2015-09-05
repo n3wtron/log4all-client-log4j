@@ -16,6 +16,7 @@ import org.apache.log4j.spi.LocationInfo;
 import org.apache.log4j.spi.LoggingEvent;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.apache.log4j.MDC;
 
 /**
  * Created by igor on 05/06/14.
@@ -29,6 +30,9 @@ public class Log4AllAppender extends AppenderSkeleton {
 	private long maxSize = 5242880;
 	private int maxOldSec = 60;
 	private static Date lastFlusherStarted = null;
+
+	//if you want log MDC entry, key must start with this sequences
+	private static String PREFIX_MDC_SEQUENCES="##!";
 
 	@Override
 	protected void append(LoggingEvent event) {
@@ -84,6 +88,29 @@ public class Log4AllAppender extends AppenderSkeleton {
 					}
 					LocationInfo locInfo = event.getLocationInformation();
 					message +=" #class:\""+locInfo.getClassName()+"."+locInfo.getMethodName()+"():"+locInfo.getLineNumber()+"\"";
+					//ADD MDC MESSAGE
+					if (null!= MDC.getContext() && !MDC.getContext().isEmpty()) {
+						if (message==null){
+							message="";
+						}
+
+						//true if message ends with "
+						boolean addLastApex = message.endsWith("\"");
+
+						if (addLastApex){
+							message = message.substring(0,message.length()-1);
+						}
+
+						for (Object k :MDC.getContext().keySet()) {
+							if (k.toString().startsWith(PREFIX_MDC_SEQUENCES)) {
+								message += "#" + k.toString().substring(PREFIX_MDC_SEQUENCES.length(),k.toString().length()) + ":" + MDC.get(k.toString());
+							}
+						}
+						if (addLastApex){
+							message +="\"";
+						}
+					}
+
 					JSONObject jsonLog;
 					if (event.getThrowableInformation() != null) {
 						StringBuffer stackBuff = new StringBuffer();
