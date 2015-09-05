@@ -4,6 +4,8 @@ import java.io.FileNotFoundException;
 import java.util.Date;
 
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
+
 import org.apache.log4j.xml.DOMConfigurator;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -44,7 +46,7 @@ public class Log4AllAppenderTest {
                     " very long  very long  very long  very long  very long  very long  very long " +
                     " very long  very long  very long  very long  very long  very long  very long  very long " +
                     " very long  very long  very long  very long  very long  very long  very long  very long " +
-                    "#application:log4j-test #rand:"+new Date().getSeconds(),e);
+                    "#application:log4j-test #rand:" + new Date().getSeconds(), e);
         }
     }
 
@@ -70,6 +72,30 @@ public class Log4AllAppenderTest {
         }catch(Exception e) {
             logger.info(null,e);
         }
+    }
+
+     @Test
+    public void mdcTest() throws InterruptedException {
+        try{
+            //remember to use escape sequences for keys: ##!
+            MDC.put("##!chiave1", "valore1");
+            MDC.put("##!chiave2", "valore2");
+            throw new Exception("test exception",new FileNotFoundException("test filenotfoundException"));
+        }catch(Exception e) {
+            //TEST with message and MDC keys
+            logger.info("MdcTest",e);
+            // TEST with null message and MDC keys
+             logger.info(null,e);
+            MDC.remove("##!chiave1");
+            MDC.remove("##!chiave2");
+            //TEST without MDC keys
+            logger.info("MdcTest2",e);
+        }
+         finally{
+             MDC.remove("##!chiave1");
+             MDC.remove("##!chiave2");
+
+         }
     }
     
     @AfterClass
